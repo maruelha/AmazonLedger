@@ -31,12 +31,46 @@
     </span>
   </h1>
   <form method="post" action="/parse">
-    <textarea name="paste" placeholder="Bestelltext von Amazon.de hier einfügen …" autofocus></textarea>
+    <textarea id="paste-area" name="paste" placeholder="Bestelltext von Amazon.de hier einfügen …" autofocus></textarea>
     <div class="actions">
       <button type="submit">Parsen →</button>
     </div>
     <p class="hint">Mehrere Bestellungen auf einmal sind erlaubt. Erst nach dem Klick auf „Speichern" werden Daten in die Datenbank geschrieben.</p>
   </form>
 </div>
+<script>
+function htmlToMarkdown(html) {
+  var doc = new DOMParser().parseFromString(html, 'text/html');
+  var BLOCK = new Set(['DIV','P','BR','HR','TR','LI','UL','OL',
+                       'H1','H2','H3','H4','H5','H6',
+                       'SECTION','ARTICLE','HEADER','FOOTER',
+                       'TABLE','TBODY','THEAD','TFOOT','MAIN']);
+  function walk(node) {
+    if (node.nodeType === 3) return node.textContent;
+    if (node.nodeType !== 1) return '';
+    var tag = node.tagName;
+    if (tag === 'A') {
+      var href = node.getAttribute('href') || '';
+      var text = node.textContent.trim();
+      return (text && href) ? '[' + text + '](' + href + ')' : text;
+    }
+    var inner = Array.from(node.childNodes).map(walk).join('');
+    return BLOCK.has(tag) ? '\n' + inner + '\n' : inner;
+  }
+  var text = walk(doc.body || doc.documentElement);
+  return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+document.getElementById('paste-area').addEventListener('paste', function(e) {
+  var html = e.clipboardData.getData('text/html');
+  if (!html) return;           // no HTML flavor → allow default plain-text paste
+  e.preventDefault();
+  var md = htmlToMarkdown(html);
+  var ta = e.target;
+  var s = ta.selectionStart, end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, s) + md + ta.value.substring(end);
+  ta.selectionStart = ta.selectionEnd = s + md.length;
+});
+</script>
 </body>
 </html>

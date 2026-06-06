@@ -6,6 +6,7 @@ import pytest
 
 from db import (EXPORT_COLUMNS, generate_csv, get_export_rows,
                 get_filtered_orders, get_connection, save_orders)
+from html_to_md import html_to_markdown
 from init_db import init_db
 from parser import parse_orders
 
@@ -371,6 +372,39 @@ def test_csv_blank_amount_included(tmp_db):
     lines = csv_text.lstrip('﻿').splitlines()
     assert len(lines) == 2
     assert 'B00EJBP6A0' in lines[1]   # item present despite blank amount
+
+
+# ---------------------------------------------------------------------------
+# HTML → Markdown conversion (mirrors the JS paste handler)
+# ---------------------------------------------------------------------------
+
+_HTML_FRAGMENT = """\
+<div>Bestellung aufgegeben</div>
+<div>3. Januar 2024</div>
+<div>Summe</div>
+<div>16,89 €</div>
+<div>Bestellnr. 303-0000001-0000001</div>
+<div><a href="https://www.amazon.de/dp/B0D2SVRC4W?ref=x">DAOUZL Sonnenblume</a></div>
+<div><a href="https://www.amazon.de/your-orders/pop?orderId=303-0000001-0000001&amp;shipmentId=SHIP99&amp;asin=B0D2SVRC4W"> Deinen Artikel anzeigen</a></div>
+"""
+
+
+def test_html_to_markdown_links_preserved():
+    md = html_to_markdown(_HTML_FRAGMENT)
+    assert '[DAOUZL Sonnenblume](https://www.amazon.de/dp/B0D2SVRC4W?ref=x)' in md
+    assert '?ref=x' in md                        # query string intact
+    assert 'shipmentId=SHIP99' in md             # shipmentId survives &amp; unescape
+
+
+def test_html_to_markdown_end_to_end():
+    """HTML→markdown conversion feeds correctly into the existing parser."""
+    md = html_to_markdown(_HTML_FRAGMENT)
+    orders = parse_orders(md)
+    assert len(orders) == 1
+    items = [i for p in orders[0]['packages'] for i in p['items']]
+    assert len(items) == 1
+    assert items[0]['asin'] == 'B0D2SVRC4W'
+    assert orders[0]['packages'][0]['shipment_id'] == 'SHIP99'
 
 
 def test_csv_format(tmp_db):
