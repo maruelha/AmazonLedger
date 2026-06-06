@@ -123,7 +123,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for item in pkg.items %}
+            {% for item in pkg.line_items %}
             {% set ii = loop.index0 %}
             <tr>
               <td>{{ item.name }}</td>

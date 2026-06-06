@@ -199,7 +199,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for item in pkg.items %}
+            {% for item in pkg.line_items %}
             <input type="hidden" name="item_ids" value="{{ item.id }}">
             <tr class="{{ 'tax-row' if item.tax_relevant else '' }}">
               <td>{{ item.name }}</td>

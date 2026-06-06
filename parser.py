@@ -156,7 +156,7 @@ def _parse_block(lines):
         })
 
     order['packages'] = [
-        {'shipment_id': sid, 'items': pkg_items}
+        {'shipment_id': sid, 'line_items': pkg_items}
         for sid, pkg_items in buckets.items()
     ]
     return order

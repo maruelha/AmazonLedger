@@ -137,7 +137,7 @@
           {% if pkg.shipment_amount %} &nbsp;·&nbsp; {{ pkg.shipment_amount }} €{% endif %}
         </div>
 
-        {% if pkg.items %}
+        {% if pkg.line_items %}
         <table>
           <thead>
             <tr>
@@ -151,7 +151,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for item in pkg.items %}
+            {% for item in pkg.line_items %}
             <tr>
               <td class="center">
                 <input type="checkbox" name="item_id" value="{{ item.id }}" class="item-cb">

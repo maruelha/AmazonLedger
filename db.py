@@ -22,7 +22,7 @@ def get_all_orders(conn):
         order['packages'] = []
         for pkg in packages:
             pkg = dict(pkg)
-            pkg['items'] = [
+            pkg['line_items'] = [
                 dict(i) for i in conn.execute(
                     'SELECT * FROM items WHERE package_id = ?', (pkg['id'],)
                 ).fetchall()
@@ -75,8 +75,8 @@ def get_filtered_orders(conn, year=None, tax_relevant_only=False):
             if tax_relevant_only:
                 item_q += ' AND tax_relevant = 1'
             item_q += ' ORDER BY id'
-            pkg['items'] = [dict(i) for i in conn.execute(item_q, item_p).fetchall()]
-            if pkg['items']:
+            pkg['line_items'] = [dict(i) for i in conn.execute(item_q, item_p).fetchall()]
+            if pkg['line_items']:
                 order['packages'].append(pkg)
                 has_items = True
 
@@ -195,7 +195,7 @@ def save_orders(conn, orders, tax_flags, item_amounts, shipment_amounts):
             pkg_id = cur.lastrowid
             saved['packages'] += 1
 
-            for k, item in enumerate(pkg['items']):
+            for k, item in enumerate(pkg['line_items']):
                 tax_rel = 1 if tax_flags.get(f'{i}__{j}__{k}') else 0
                 i_amount = _normalize(item_amounts.get(f'{i}__{j}__{k}', ''))
 

@@ -128,7 +128,7 @@ def _order(orders, order_no):
     return next(o for o in orders if o['order_no'] == order_no)
 
 def _all_items(order):
-    return [item for pkg in order['packages'] for item in pkg['items']]
+    return [item for pkg in order['packages'] for item in pkg['line_items']]
 
 def _pkg(order, shipment_id):
     return next(p for p in order['packages'] if p['shipment_id'] == shipment_id)
@@ -137,6 +137,16 @@ def _pkg(order, shipment_id):
 # ---------------------------------------------------------------------------
 # Fixture A tests
 # ---------------------------------------------------------------------------
+
+def test_parser_packages_use_line_items_key():
+    """Packages must use 'line_items', not 'items', to avoid shadowing the dict built-in."""
+    orders = parse_orders(FIXTURE_B)
+    pkg = orders[0]['packages'][0]
+    assert 'line_items' in pkg, "package must have 'line_items' key"
+    assert 'items' not in pkg, "'items' key must not exist on package (shadows dict.items())"
+    assert isinstance(pkg['line_items'], list)
+    assert len(pkg['line_items']) > 0
+
 
 def test_a_order_count():
     assert len(parse_orders(FIXTURE_A)) == 5
@@ -175,13 +185,13 @@ def test_a_packages_for_multi_package_order():
     assert shipment_ids == {'UJxfPvsSv', 'U1YGxTsPv'}
 
     pkg1 = _pkg(order, 'UJxfPvsSv')
-    assert len(pkg1['items']) == 2
-    asins_pkg1 = {i['asin'] for i in pkg1['items']}
+    assert len(pkg1['line_items']) == 2
+    asins_pkg1 = {i['asin'] for i in pkg1['line_items']}
     assert asins_pkg1 == {'B0CG638LRS', 'B000KTBE9M'}
 
     pkg2 = _pkg(order, 'U1YGxTsPv')
-    assert len(pkg2['items']) == 2
-    asins_pkg2 = {i['asin'] for i in pkg2['items']}
+    assert len(pkg2['line_items']) == 2
+    asins_pkg2 = {i['asin'] for i in pkg2['line_items']}
     assert asins_pkg2 == {'B08J7JDGKL', 'B0001M0H3M'}
 
 
@@ -339,7 +349,7 @@ def test_tax_relevant_filter(tmp_db):
     tmp_db.commit()
     tax_orders = get_filtered_orders(tmp_db, tax_relevant_only=True)
     assert len(tax_orders) == 1
-    all_items = [i for o in tax_orders for p in o['packages'] for i in p['items']]
+    all_items = [i for o in tax_orders for p in o['packages'] for i in p['line_items']]
     assert len(all_items) == 1
 
 
@@ -427,7 +437,7 @@ def test_html_to_markdown_end_to_end():
     md = html_to_markdown(_HTML_FRAGMENT)
     orders = parse_orders(md)
     assert len(orders) == 1
-    items = [i for p in orders[0]['packages'] for i in p['items']]
+    items = [i for p in orders[0]['packages'] for i in p['line_items']]
     assert len(items) == 1
     assert items[0]['asin'] == 'B0D2SVRC4W'
     assert orders[0]['packages'][0]['shipment_id'] == 'SHIP99'
