@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Amazon Ledger — Datenbank verwalten</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; color: #222; margin: 0; padding: 24px; }
+    .container { max-width: 980px; margin: 0 auto; }
+
+    .top-bar {
+      display: flex; align-items: center; gap: 16px;
+      border-bottom: 2px solid #e47911; padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .top-bar h1 { font-size: 1.4rem; margin: 0; flex: 1; }
+    a.back { color: #555; text-decoration: none; font-size: 0.9rem; }
+    a.back:hover { color: #222; }
+
+    /* Danger zone */
+    .danger-bar {
+      background: #fff3f3; border: 1px solid #f5c6cb; border-radius: 6px;
+      padding: 12px 16px; display: flex; align-items: center; gap: 16px;
+      margin-bottom: 20px;
+    }
+    .danger-bar span { font-size: 0.9rem; color: #721c24; flex: 1; }
+    button.clear-all {
+      background: #c0392b; color: #fff; border: none; border-radius: 4px;
+      padding: 8px 20px; font-size: 0.9rem; cursor: pointer;
+    }
+    button.clear-all:hover { background: #a93226; }
+
+    /* Bulk delete bar */
+    .bulk-bar {
+      background: #fff; border: 1px solid #ddd; border-radius: 4px;
+      padding: 10px 14px; display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+    .bulk-bar label { font-size: 0.85rem; color: #555; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    button.delete-sel {
+      background: #e47911; color: #fff; border: none; border-radius: 4px;
+      padding: 7px 18px; font-size: 0.85rem; cursor: pointer; margin-left: auto;
+    }
+    button.delete-sel:hover { background: #c96a0a; }
+
+    /* Order card */
+    .order-card {
+      background: #fff; border: 1px solid #ddd; border-radius: 6px;
+      margin-bottom: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .order-header {
+      background: #232f3e; color: #fff; padding: 10px 14px;
+      display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+    }
+    .order-header input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #e47911; }
+    .order-header strong { font-size: 0.95rem; }
+    .order-header span { font-size: 0.82rem; opacity: 0.8; }
+    .badge { font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; }
+    .badge-digital  { background: #cce5ff; color: #004085; }
+    .badge-physisch { background: #d4edda; color: #155724; }
+
+    /* Package */
+    .package { border-top: 1px solid #f0f0f0; padding: 10px 14px; }
+    .pkg-label { font-size: 0.8rem; color: #777; margin-bottom: 6px; }
+    .pkg-label strong { color: #444; }
+
+    /* Items table */
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    thead th {
+      background: #f4f4f4; text-align: left; padding: 5px 8px;
+      font-weight: 600; border-bottom: 1px solid #e0e0e0; white-space: nowrap;
+    }
+    tbody td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+    td.mono { font-family: monospace; font-size: 0.78rem; color: #666; }
+    td.center { text-align: center; }
+    .check-col { width: 32px; text-align: center; }
+
+    /* Empty state */
+    .empty { text-align: center; color: #888; padding: 48px 0; font-size: 1rem; }
+
+    input[type=checkbox] { cursor: pointer; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="top-bar">
+    <h1>Datenbank verwalten</h1>
+    <a class="back" href="/">← Bestellungen einfügen</a>
+  </div>
+
+  <!-- Clear all -->
+  <div class="danger-bar">
+    <span>Alle gespeicherten Bestellungen, Pakete und Artikel unwiderruflich löschen.</span>
+    <form method="post" action="/manage/clear"
+          onsubmit="return confirm('Wirklich ALLE Daten löschen? Das kann nicht rückgängig gemacht werden.')">
+      <button type="submit" class="clear-all">Datenbank leeren</button>
+    </form>
+  </div>
+
+  {% if not orders %}
+    <div class="empty">Keine Bestellungen in der Datenbank.</div>
+  {% else %}
+
+  <!-- Bulk delete form -->
+  <form method="post" action="/manage/delete" id="delete-form">
+
+    <div class="bulk-bar">
+      <label>
+        <input type="checkbox" id="select-all-orders"> Alle Bestellungen auswählen
+      </label>
+      <label>
+        <input type="checkbox" id="select-all-items"> Alle Artikel auswählen
+      </label>
+      <button type="submit" class="delete-sel"
+              onclick="return confirm('Ausgewählte Einträge wirklich löschen?')">
+        Ausgewählte löschen
+      </button>
+    </div>
+
+    {% for order in orders %}
+    <div class="order-card">
+      <div class="order-header">
+        <input type="checkbox" name="order_id" value="{{ order.id }}" class="order-cb">
+        <strong>{{ order.order_no }}</strong>
+        <span>{{ order.order_date }}</span>
+        <span>{{ order.order_total }} €</span>
+        <span class="badge badge-{{ order.type }}">{{ order.type }}</span>
+        {% if order.invoice_name %}<span>{{ order.invoice_name }}</span>{% endif %}
+      </div>
+
+      {% for pkg in order.packages %}
+      <div class="package">
+        <div class="pkg-label">
+          <strong>Sendung:</strong> {{ pkg.shipment_id or '—' }}
+          {% if pkg.shipment_amount %} &nbsp;·&nbsp; {{ pkg.shipment_amount }} €{% endif %}
+        </div>
+
+        {% if pkg.items %}
+        <table>
+          <thead>
+            <tr>
+              <th class="check-col"><input type="checkbox" class="item-group-cb" title="Alle Artikel dieser Sendung"></th>
+              <th>Artikel</th>
+              <th>ASIN</th>
+              <th>Menge</th>
+              <th>Verkäufer</th>
+              <th>Betrag</th>
+              <th>Steuerrel.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in pkg.items %}
+            <tr>
+              <td class="center">
+                <input type="checkbox" name="item_id" value="{{ item.id }}" class="item-cb">
+              </td>
+              <td>{{ item.name }}</td>
+              <td class="mono">{{ item.asin or '—' }}</td>
+              <td>{{ item.qty }}</td>
+              <td>{{ item.seller or '—' }}</td>
+              <td>{{ item.item_amount or '—' }}</td>
+              <td class="center">{{ '✓' if item.tax_relevant else '' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+          <p style="font-size:0.82rem;color:#aaa;margin:4px 0;">Keine Artikel.</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+  </form>
+  {% endif %}
+
+</div>
+
+<script>
+  // Select-all orders
+  document.getElementById('select-all-orders').addEventListener('change', function () {
+    document.querySelectorAll('.order-cb').forEach(cb => cb.checked = this.checked);
+  });
+
+  // Select-all items
+  document.getElementById('select-all-items').addEventListener('change', function () {
+    document.querySelectorAll('.item-cb').forEach(cb => cb.checked = this.checked);
+  });
+
+  // Per-package "select all items in this package" header checkbox
+  document.querySelectorAll('.item-group-cb').forEach(groupCb => {
+    groupCb.addEventListener('change', function () {
+      this.closest('table').querySelectorAll('.item-cb').forEach(cb => cb.checked = this.checked);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AmazonLedger — Test Overview</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 860px;
+      margin: 40px auto;
+      padding: 0 24px;
+      color: #222;
+      background: #f9f9f9;
+    }
+    h1 {
+      font-size: 1.6rem;
+      border-bottom: 2px solid #e47911;
+      padding-bottom: 8px;
+      color: #111;
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin-top: 32px;
+      color: #e47911;
+    }
+    p.subtitle {
+      color: #555;
+      margin-top: -4px;
+      font-size: 0.9rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    thead {
+      background: #232f3e;
+      color: #fff;
+    }
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    tbody tr:nth-child(even) {
+      background: #f4f6f8;
+    }
+    tbody td {
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      vertical-align: top;
+    }
+    td.test-name {
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #555;
+      white-space: nowrap;
+    }
+    td.what {
+      line-height: 1.5;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-a {
+      background: #d4edda;
+      color: #155724;
+    }
+    .badge-b {
+      background: #cce5ff;
+      color: #004085;
+    }
+    footer {
+      margin-top: 48px;
+      font-size: 0.8rem;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>AmazonLedger — Parser Test Overview</h1>
+  <p>Run all tests with: <code>python -m pytest test_parser.py -v</code> &nbsp;or double-click <strong>run_tests.bat</strong></p>
+
+  <!-- FIXTURE A -->
+  <h2>Fixture A — Multi-order paste (5 orders, order-summary view)</h2>
+  <p class="subtitle">
+    Tests parsing of several orders pasted at once, including a multi-package order, a quantity &gt; 1, digital orders, and a non-B ASIN.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Test name</th>
+        <th>What it checks</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td class="test-name">test_a_order_count</td>
+        <td class="what">Exactly <strong>5 orders</strong> are parsed from the pasted block</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td class="test-name">test_a_dates</td>
+        <td class="what">All 5 dates are converted from German to ISO format<br>
+          e.g. <em>10. Januar 2024</em> → <strong>2024-01-10</strong></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td class="test-name">test_a_totals</td>
+        <td class="what">All 5 order totals are extracted correctly with the German decimal comma<br>
+          e.g. <strong>49,41</strong> (not 49.41)</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td class="test-name">test_a_types</td>
+        <td class="what">
+          Audible order (<em>Abonnement abgerechnet am</em>) → <strong>digital</strong><br>
+          Castle order (<em>D01-…</em> order number) → <strong>digital</strong><br>
+          All other 3 orders → <strong>physisch</strong>
+        </td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td class="test-name">test_a_packages_for_multi_package_order</td>
+        <td class="what">Order <code>304-5999696-6159543</code> has exactly <strong>2 packages</strong>:<br>
+          &bull; <code>UJxfPvsSv</code>: STECKEL + tesa weiss<br>
+          &bull; <code>U1YGxTsPv</code>: Aigostar + tesa schwarz
+        </td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td class="test-name">test_a_aigostar_quantity</td>
+        <td class="what">The Aigostar power strip has quantity <strong>2</strong> (bare number on the line before the item)</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td class="test-name">test_a_book_asin</td>
+        <td class="what">Book ASIN <strong>3837164764</strong> is captured correctly — ASINs don't always start with "B"</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td class="test-name">test_a_prime_video_no_asin</td>
+        <td class="what">Castle (Prime Video) is recognised as an item but has <strong>asin = None</strong></td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td class="test-name">test_a_noise_links_excluded</td>
+        <td class="what">No item name contains noise phrases such as:<br>
+          <em>Nochmals kaufen, Schreib eine Produktrezension, Bestelldetails anzeigen, Meine Video-Bibliothek</em>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- FIXTURE B -->
+  <h2>Fixture B — Bestelldetails view (1 order, 2 items)</h2>
+  <p class="subtitle">
+    Tests the richer detail view that includes per-item prices and seller names.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Test name</th>
+        <th>What it checks</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>10</td>
+        <td class="test-name">test_b_order_count</td>
+        <td class="what">Exactly <strong>1 order</strong> is parsed</td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td class="test-name">test_b_baehr_handcreme</td>
+        <td class="what">Baehr Handcreme: price <strong>9,90</strong>, seller <strong>FISH SPA &amp; MORE</strong></td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td class="test-name">test_b_deutsche_post</td>
+        <td class="what">Deutsche Post Packpapier: price <strong>6,99</strong>, seller <strong>HeiTrade GmbH</strong></td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td class="test-name">test_b_two_separate_packages</td>
+        <td class="what">The 2 items are in <strong>2 separate packages</strong>: <code>U1qYPH4xv</code> and <code>DKHqm9zdr</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <footer>AmazonLedger Step 1 &mdash; generated 2026-06-06</footer>
+
+</body>
+</html>

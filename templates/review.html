@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Amazon Ledger — Prüfen &amp; Speichern</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; color: #222; margin: 0; padding: 24px; }
+    .container { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; border-bottom: 2px solid #e47911; padding-bottom: 8px; }
+
+    /* Order card */
+    .order-card {
+      background: #fff; border: 1px solid #ddd; border-radius: 6px;
+      margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .order-header {
+      background: #232f3e; color: #fff; padding: 10px 16px;
+      display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+    }
+    .order-header strong { font-size: 1rem; }
+    .order-header span { font-size: 0.85rem; opacity: 0.85; }
+    .badge {
+      font-size: 0.72rem; font-weight: 700; padding: 2px 8px;
+      border-radius: 10px; text-transform: uppercase;
+    }
+    .badge-digital { background: #cce5ff; color: #004085; }
+    .badge-physisch { background: #d4edda; color: #155724; }
+
+    /* Package block */
+    .package {
+      border-top: 1px solid #eee; padding: 12px 16px;
+    }
+    .package:first-of-type { border-top: none; }
+    .pkg-header {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 10px;
+      font-size: 0.85rem; color: #555;
+    }
+    .pkg-header strong { color: #222; }
+    .pkg-header label { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+    .pkg-header input[type=text] {
+      width: 90px; padding: 4px 6px; border: 1px solid #ccc;
+      border-radius: 4px; font-size: 0.85rem; text-align: right;
+    }
+
+    /* Items table */
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead th {
+      background: #f0f0f0; text-align: left; padding: 6px 8px;
+      font-weight: 600; border-bottom: 1px solid #ddd; white-space: nowrap;
+    }
+    tbody td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+    td.mono { font-family: monospace; font-size: 0.8rem; color: #555; }
+    td.center { text-align: center; }
+    input.amount {
+      width: 80px; padding: 4px 6px; border: 1px solid #ccc;
+      border-radius: 4px; font-size: 0.85rem; text-align: right;
+    }
+    input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+
+    /* Bottom bar */
+    .bottom-bar {
+      position: sticky; bottom: 0; background: #fff; border-top: 1px solid #ddd;
+      padding: 12px 0; display: flex; justify-content: space-between;
+      align-items: center; margin-top: 8px;
+    }
+    .bottom-bar a { color: #555; text-decoration: none; font-size: 0.9rem; }
+    .bottom-bar a:hover { color: #222; }
+    button.save {
+      background: #e47911; color: #fff; border: none; border-radius: 4px;
+      padding: 10px 32px; font-size: 1rem; cursor: pointer;
+    }
+    button.save:hover { background: #c96a0a; }
+    .summary { font-size: 0.85rem; color: #555; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Bestellungen prüfen &amp; speichern</h1>
+
+  {% if not orders %}
+    <p>Keine Bestellungen erkannt. <a href="/">← Zurück</a></p>
+  {% else %}
+
+  <form method="post" action="/save">
+    <input type="hidden" name="parsed_json" value="{{ parsed_json }}">
+
+    {% for order in orders %}
+    {% set oi = loop.index0 %}
+    <div class="order-card">
+      <div class="order-header">
+        <strong>{{ order.order_no }}</strong>
+        <span>{{ order.order_date }}</span>
+        <span>{{ order.order_total }} €</span>
+        <span class="badge badge-{{ order.type }}">{{ order.type }}</span>
+      </div>
+
+      {% for pkg in order.packages %}
+      {% set pi = loop.index0 %}
+      <div class="package">
+        <div class="pkg-header">
+          <strong>Sendung:</strong>
+          <span>{{ pkg.shipment_id or '—' }}</span>
+          <label>
+            Sendungsbetrag (€)
+            <input type="text" class="amount"
+                   name="shipment_amount__{{ oi }}__{{ pi }}"
+                   placeholder="0,00">
+          </label>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Artikel</th>
+              <th>ASIN</th>
+              <th>Menge</th>
+              <th>Verkäufer</th>
+              <th>Betrag (€)</th>
+              <th>Steuerrelevant</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in pkg.items %}
+            {% set ii = loop.index0 %}
+            <tr>
+              <td>{{ item.name }}</td>
+              <td class="mono">{{ item.asin or '—' }}</td>
+              <td>{{ item.qty }}</td>
+              <td>{{ item.seller or '—' }}</td>
+              <td>
+                <input type="text" class="amount"
+                       name="item_amount__{{ oi }}__{{ pi }}__{{ ii }}"
+                       value="{{ item.price or '' }}"
+                       placeholder="0,00">
+              </td>
+              <td class="center">
+                <input type="checkbox"
+                       name="tax_relevant__{{ oi }}__{{ pi }}__{{ ii }}">
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+    <div class="bottom-bar">
+      <a href="/">← Neu einfügen</a>
+      <span class="summary">{{ orders | length }} Bestellung(en) erkannt</span>
+      <button type="submit" class="save">Speichern</button>
+    </div>
+  </form>
+
+  {% endif %}
+</div>
+</body>
+</html>
