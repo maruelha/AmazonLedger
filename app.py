@@ -1,10 +1,11 @@
 import json
 import os
 
-from flask import Flask, redirect, render_template, request
+from flask import Flask, redirect, render_template, request, Response
 
-from db import (clear_db, delete_items, delete_orders, get_all_orders,
-                get_connection, save_orders)
+from db import (clear_db, delete_items, delete_orders, generate_csv,
+                get_all_orders, get_connection, get_export_rows,
+                get_filtered_orders, get_years, save_edits, save_orders)
 from parser import parse_orders
 
 app = Flask(__name__)
@@ -73,6 +74,45 @@ def manage_clear():
     clear_db(conn)
     conn.close()
     return redirect('/manage')
+
+
+@app.route('/browse')
+def browse():
+    year    = request.args.get('year', '')
+    tax_rel = request.args.get('tax_rel', '') == '1'
+    conn = get_connection(DB_PATH)
+    years  = get_years(conn)
+    orders = get_filtered_orders(conn, year=year or None, tax_relevant_only=tax_rel)
+    conn.close()
+    return render_template('browse.html', orders=orders, years=years,
+                           selected_year=year, tax_rel=tax_rel)
+
+
+@app.route('/browse/save', methods=['POST'])
+def browse_save():
+    year    = request.form.get('year', '')
+    tax_rel = request.form.get('tax_rel', '')
+    item_ids  = [int(x) for x in request.form.getlist('item_ids')]
+    order_ids = [int(x) for x in request.form.getlist('order_ids')]
+    pkg_ids   = [int(x) for x in request.form.getlist('pkg_ids')]
+    conn = get_connection(DB_PATH)
+    save_edits(conn, request.form, item_ids, order_ids, pkg_ids)
+    conn.close()
+    parts = [p for p in [f'year={year}' if year else '',
+                          f'tax_rel={tax_rel}' if tax_rel else ''] if p]
+    return redirect(f'/browse?{"&".join(parts)}')
+
+
+@app.route('/export')
+def export():
+    year = request.args.get('year', '')
+    conn = get_connection(DB_PATH)
+    rows = get_export_rows(conn, year=year or None)
+    conn.close()
+    csv_bytes = generate_csv(rows).encode('utf-8')
+    fname = f'amazon_steuer{"_" + year if year else ""}.csv'
+    return Response(csv_bytes, mimetype='text/csv; charset=utf-8',
+                    headers={'Content-Disposition': f'attachment; filename="{fname}"'})
 
 
 if __name__ == '__main__':

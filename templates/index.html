@@ -25,7 +25,10 @@
 <div class="container">
   <h1 style="display:flex;justify-content:space-between;align-items:baseline;">
     Amazon Ledger — Bestellungen einfügen
-    <a href="/manage" style="font-size:0.8rem;font-weight:normal;color:#e47911;">Datenbank verwalten →</a>
+    <span style="display:flex;gap:16px;">
+      <a href="/browse" style="font-size:0.8rem;font-weight:normal;color:#e47911;">Bestellungen ansehen →</a>
+      <a href="/manage" style="font-size:0.8rem;font-weight:normal;color:#888;">Verwalten</a>
+    </span>
   </h1>
   <form method="post" action="/parse">
     <textarea name="paste" placeholder="Bestelltext von Amazon.de hier einfügen …" autofocus></textarea>

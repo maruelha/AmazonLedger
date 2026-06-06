@@ -1,3 +1,5 @@
+import csv
+import io
 import sqlite3
 
 
@@ -42,6 +44,107 @@ def delete_items(conn, item_ids):
     for iid in item_ids:
         conn.execute('DELETE FROM items WHERE id = ?', (iid,))
     conn.commit()
+
+
+def get_years(conn):
+    rows = conn.execute(
+        "SELECT DISTINCT strftime('%Y', order_date) AS y FROM orders "
+        "WHERE order_date IS NOT NULL ORDER BY y DESC"
+    ).fetchall()
+    return [r['y'] for r in rows]
+
+
+def get_filtered_orders(conn, year=None, tax_relevant_only=False):
+    q = 'SELECT * FROM orders WHERE 1=1'
+    params = []
+    if year:
+        q += " AND strftime('%Y', order_date) = ?"
+        params.append(str(year))
+    q += ' ORDER BY order_date DESC, order_no'
+
+    result = []
+    for order in [dict(r) for r in conn.execute(q, params).fetchall()]:
+        order['packages'] = []
+        has_items = False
+
+        for pkg in [dict(p) for p in conn.execute(
+            'SELECT * FROM packages WHERE order_id = ? ORDER BY id', (order['id'],)
+        ).fetchall()]:
+            item_q = 'SELECT * FROM items WHERE package_id = ?'
+            item_p = [pkg['id']]
+            if tax_relevant_only:
+                item_q += ' AND tax_relevant = 1'
+            item_q += ' ORDER BY id'
+            pkg['items'] = [dict(i) for i in conn.execute(item_q, item_p).fetchall()]
+            if pkg['items']:
+                order['packages'].append(pkg)
+                has_items = True
+
+        if not tax_relevant_only or has_items:
+            result.append(order)
+    return result
+
+
+def save_edits(conn, form, item_ids, order_ids, pkg_ids):
+    for iid in item_ids:
+        conn.execute(
+            'UPDATE items SET tax_relevant=?, tax_tag=?, item_amount=? WHERE id=?',
+            (
+                1 if f'item_{iid}_tax_relevant' in form else 0,
+                1 if f'item_{iid}_tax_tag' in form else 0,
+                _normalize(form.get(f'item_{iid}_item_amount', '')),
+                iid,
+            )
+        )
+    for oid in order_ids:
+        conn.execute(
+            'UPDATE orders SET invoice_name=? WHERE id=?',
+            (form.get(f'order_{oid}_invoice_name', '').strip() or None, oid)
+        )
+    for pid in pkg_ids:
+        conn.execute(
+            'UPDATE packages SET shipment_amount=? WHERE id=?',
+            (_normalize(form.get(f'package_{pid}_shipment_amount', '')), pid)
+        )
+    conn.commit()
+
+
+EXPORT_COLUMNS = [
+    'order_date', 'order_no', 'type', 'shipment_id', 'item_name', 'asin',
+    'qty', 'seller', 'item_amount', 'shipment_amount', 'tax_tag',
+    'order_total', 'invoice_name',
+]
+
+
+def get_export_rows(conn, year=None):
+    q = '''
+        SELECT
+            o.order_date, o.order_no, o.type, p.shipment_id,
+            i.name   AS item_name, i.asin, i.qty, i.seller,
+            i.item_amount, p.shipment_amount, i.tax_tag,
+            o.order_total, o.invoice_name
+        FROM items i
+        JOIN packages p ON p.id = i.package_id
+        JOIN orders  o ON o.id = i.order_id
+        WHERE i.tax_relevant = 1
+    '''
+    params = []
+    if year:
+        q += " AND strftime('%Y', o.order_date) = ?"
+        params.append(str(year))
+    q += ' ORDER BY o.order_date, o.order_no, p.id, i.id'
+    return [dict(r) for r in conn.execute(q, params).fetchall()]
+
+
+def generate_csv(rows):
+    """UTF-8-with-BOM, semicolon-delimited CSV (German-Excel-safe)."""
+    out = io.StringIO()
+    out.write('﻿')  # BOM
+    w = csv.writer(out, delimiter=';', quoting=csv.QUOTE_MINIMAL, lineterminator='\r\n')
+    w.writerow(EXPORT_COLUMNS)
+    for row in rows:
+        w.writerow(['' if row.get(col) is None else row[col] for col in EXPORT_COLUMNS])
+    return out.getvalue()
 
 
 def clear_db(conn):

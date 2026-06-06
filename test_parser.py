@@ -4,7 +4,8 @@ import tempfile
 
 import pytest
 
-from db import save_orders
+from db import (EXPORT_COLUMNS, generate_csv, get_export_rows,
+                get_filtered_orders, get_connection, save_orders)
 from init_db import init_db
 from parser import parse_orders
 
@@ -252,7 +253,7 @@ def tmp_db():
     f = tempfile.NamedTemporaryFile(suffix='.db', delete=False)
     f.close()
     init_db(f.name)
-    conn = sqlite3.connect(f.name)
+    conn = get_connection(f.name)   # row_factory needed by get_filtered_orders / get_export_rows
     yield conn
     conn.close()
     os.unlink(f.name)
@@ -319,3 +320,74 @@ def test_save_dedupe_skips_existing(tmp_db):
     assert tmp_db.execute('SELECT COUNT(*) FROM orders').fetchone()[0] == 5
     assert tmp_db.execute('SELECT COUNT(*) FROM items').fetchone()[0] == \
            tmp_db.execute('SELECT COUNT(*) FROM items').fetchone()[0]
+
+
+# ---------------------------------------------------------------------------
+# Step 3 — filter + CSV export tests
+# ---------------------------------------------------------------------------
+
+def test_year_filter(tmp_db):
+    save_orders(tmp_db, parse_orders(FIXTURE_A), {}, {}, {})
+    assert len(get_filtered_orders(tmp_db, year='2024')) == 5
+    assert len(get_filtered_orders(tmp_db, year='2023')) == 0
+
+
+def test_tax_relevant_filter(tmp_db):
+    save_orders(tmp_db, parse_orders(FIXTURE_A), {}, {}, {})
+    tmp_db.execute('UPDATE items SET tax_relevant=1 WHERE id=(SELECT MIN(id) FROM items)')
+    tmp_db.commit()
+    tax_orders = get_filtered_orders(tmp_db, tax_relevant_only=True)
+    assert len(tax_orders) == 1
+    all_items = [i for o in tax_orders for p in o['packages'] for i in p['items']]
+    assert len(all_items) == 1
+
+
+def test_year_and_tax_filter_combined(tmp_db):
+    save_orders(tmp_db, parse_orders(FIXTURE_A), {}, {}, {})
+    tmp_db.execute('UPDATE items SET tax_relevant=1 WHERE id=(SELECT MIN(id) FROM items)')
+    tmp_db.commit()
+    assert len(get_filtered_orders(tmp_db, year='2024', tax_relevant_only=True)) == 1
+    assert len(get_filtered_orders(tmp_db, year='2023', tax_relevant_only=True)) == 0
+
+
+def test_csv_only_tax_relevant(tmp_db):
+    save_orders(tmp_db, parse_orders(FIXTURE_B), {}, {}, {})
+    tmp_db.execute("UPDATE items SET tax_relevant=1 WHERE asin='B00BYRMMCW'")
+    tmp_db.commit()
+    rows = get_export_rows(tmp_db)
+    csv_text = generate_csv(rows)
+    lines = csv_text.lstrip('﻿').splitlines()
+    assert len(lines) == 2                        # header + 1 data row
+    assert 'B00BYRMMCW' in lines[1]
+    assert 'B00EJBP6A0' not in csv_text           # non-relevant item excluded
+
+
+def test_csv_blank_amount_included(tmp_db):
+    save_orders(tmp_db, parse_orders(FIXTURE_B), {}, {}, {})
+    tmp_db.execute("UPDATE items SET tax_relevant=1, item_amount=NULL WHERE asin='B00EJBP6A0'")
+    tmp_db.commit()
+    rows = get_export_rows(tmp_db)
+    csv_text = generate_csv(rows)
+    lines = csv_text.lstrip('﻿').splitlines()
+    assert len(lines) == 2
+    assert 'B00EJBP6A0' in lines[1]   # item present despite blank amount
+
+
+def test_csv_format(tmp_db):
+    save_orders(tmp_db, parse_orders(FIXTURE_B), {}, {}, {})
+    tmp_db.execute("UPDATE items SET tax_relevant=1, item_amount='9,90' WHERE asin='B00BYRMMCW'")
+    tmp_db.execute("UPDATE items SET tax_relevant=1 WHERE asin='B00EJBP6A0'")
+    tmp_db.commit()
+    csv_text = generate_csv(get_export_rows(tmp_db))
+
+    # UTF-8 BOM present
+    assert csv_text.startswith('﻿')
+
+    lines = csv_text.lstrip('﻿').splitlines()
+    assert len(lines) == 3             # header + 2 items
+
+    # semicolon separator + correct column order
+    assert lines[0].split(';') == list(EXPORT_COLUMNS)
+
+    # comma decimal preserved (not converted to dot)
+    assert '9,90' in csv_text
