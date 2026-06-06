@@ -120,6 +120,137 @@ Verkauf durch: [HeiTrade GmbH](https://www.amazon.de/gp/aag/main?seller=A71MIBP6
 """
 
 
+FIXTURE_C = """\
+Bestellung aufgegeben
+
+    31. Dezember 2024
+
+    Summe
+
+    18,98 €
+
+        Versandadresse
+
+        [Marina Haase](javascript:void(0))
+
+                                Bestellnr.
+                                303-8830223-7233913
+
+    [Bestelldetails anzeigen](https://www.amazon.de/your-orders/order-details?orderID=303-8830223-7233913&ref=ppx_yo2ov_dt_b_fed_order_details)
+
+    [Rechnung](https://www.amazon.de/your-orders/invoice/popover?orderId=303-8830223-7233913&relatedRequestId=XKWBX8EJNJRJFHGDEFB7&ref_=fed_invoice_ajax)
+
+                        [UGREEN 4-Port USB 3.0 Hub USB Verteiler
+5Gbps USB Mehrfachstecker USB Splitter f\xfcr MacBook, iMac, Surface, Dell,
+ Thinkpad, USB Stick, Mobile HDD, Desktop PC und mehr (15cm)](https://www.amazon.de/dp/B0CD1BHXPZ?ref=ppx_yo2ov_dt_b_fed_asin_title)
+
+    [Nochmals kaufen](https://www.amazon.de/gp/buyagain?ats=xxx&ref=ppx_yo2ov_dt_b_bia_item)
+
+        [Deinen Artikel anzeigen](https://www.amazon.de/your-orders/pop?ref=ppx_yo2ov_dt_b_pop&orderId=303-8830223-7233913&lineItemId=mlnkroqtkiowuoy&shipmentId=UCrGQrbwG&packageId=1&asin=B0CD1BHXPZ)
+
+                        [Hama USB Hub 4 Ports (High-Speed
+Daten\xfcbertragung, 4x USB-A f\xfcr Maus, USB-Stick, USB-Dongle, externe HDD,
+ SSD, usw. Multiport Adapter, USB Adapter 4in1 f\xfcr B\xfcro, Homeoffice und
+unterwegs) schwarz](https://www.amazon.de/dp/B08YS1ZZ99?ref=ppx_yo2ov_dt_b_fed_asin_title)
+
+    [Nochmals kaufen](https://www.amazon.de/gp/buyagain?ats=yyy&ref=ppx_yo2ov_dt_b_bia_item)
+
+        [Deinen Artikel anzeigen](https://www.amazon.de/your-orders/pop?ref=ppx_yo2ov_dt_b_pop&orderId=303-8830223-7233913&lineItemId=mlnkroqtkipnooy&shipmentId=UCrGQrbwG&packageId=1&asin=B08YS1ZZ99)
+
+        [Produktsupport erhalten](https://www.amazon.de/ps/product-support/order?orderId=303-8830223-7233913&ref=ppx_yo2ov_dt_b_fed_product_support)
+
+        [Schreib eine Produktrezension](https://www.amazon.de/review/review-your-purchases?asins=B08YS1ZZ99%2CB0CD1BHXPZ&channel=YAcc-wr&ref=ppx_yo2ov_dt_b_rev_prod)
+
+    Abonnement abgerechnet am
+
+    30. Dezember 2024
+
+    Summe
+
+    3,99 €
+
+                                Bestellnr.
+                                D01-4663869-6632613
+
+    [Bestelldetails anzeigen](https://www.amazon.de/gp/css/order-details?orderID=D01-4663869-6632613&ref=ppx_yo2ov_dt_b_fed_digi_order_details_613)
+
+    [Rechnung](https://www.amazon.de/your-orders/invoice/popover?orderId=D01-4663869-6632613&relatedRequestId=XKWBX8EJNJRJFHGDEFB7&ref_=fed_digi_order_invoice_ajax)
+
+                        [BBC Player](https://www.amazon.de/dp/B07K2984VD?ref=ppx_yo2ov_dt_b_fed_digi_asin_title_613)
+
+        [Abonnement verwalten](https://www.amazon.de/hz5/yourmembershipsandsubscriptions?ref=ppx_yo2ov_dt_b_fed_digi_manage_subs_613)
+
+    Bestellung aufgegeben
+
+    29. Dezember 2024
+
+    Summe
+
+    36,27 €
+
+        Versandadresse
+
+        [Marina Haase](javascript:void(0))
+
+                                Bestellnr.
+                                303-2309057-1730713
+
+    [Bestelldetails anzeigen](https://www.amazon.de/your-orders/order-details?orderID=303-2309057-1730713&ref=ppx_yo2ov_dt_b_fed_order_details)
+
+    [Rechnung](https://www.amazon.de/your-orders/invoice/popover?orderId=303-2309057-1730713&relatedRequestId=XKWBX8EJNJRJFHGDEFB7&ref_=fed_invoice_ajax)
+
+                        [DAOUZL Sonnenblume Seifenblasenmaschine
+Kinder, Seifenblasenmaschinen mit Lichtern und Musik 10000+
+Blasen/Minute, Seifenblasen Blumen Blasenspielzeug Geschenk f\xfcr
+Kinder/Geburtstag/Party](https://www.amazon.de/dp/B0D2SVRC4W?ref=ppx_yo2ov_dt_b_fed_asin_title)
+
+        [Deinen Artikel anzeigen](https://www.amazon.de/your-orders/pop?ref=ppx_yo2ov_dt_b_pop&orderId=303-2309057-1730713&lineItemId=mlmomomqroluqoy&shipmentId=UJjm3z0dG&packageId=1&asin=B0D2SVRC4W)
+
+        [Eine Frage zum Produkt stellen](https://www.amazon.de/gp/help/contact/contact.html?orderId=303-2309057-1730713&step=submitEntry)
+
+        [Schreib eine Produktrezension](https://www.amazon.de/review/review-your-purchases?asins=B0D2SVRC4W&channel=YAcc-wr&ref=ppx_yo2ov_dt_b_rev_prod)
+
+                        [PUSTEFIX Seifenblasen, kleine Dose, 42 ml (3 Dosen)](https://www.amazon.de/dp/B074MDQWLR?ref=ppx_yo2ov_dt_b_fed_asin_title)
+
+        [Deinen Artikel anzeigen](https://www.amazon.de/your-orders/pop?ref=ppx_yo2ov_dt_b_pop&orderId=303-2309057-1730713&lineItemId=mlmomomqroltwoy&shipmentId=UnQTTs04G&packageId=1&asin=B074MDQWLR)
+
+        [Schreib eine Produktrezension](https://www.amazon.de/review/review-your-purchases?asins=B074MDQWLR&channel=YAcc-wr&ref=ppx_yo2ov_dt_b_rev_prod)
+
+                        [Die Ern\xe4hrungs-Docs – Mein Ern\xe4hrungstagebuch](https://www.amazon.de/dp/3965841068?ref=ppx_yo2ov_dt_b_fed_asin_title)
+
+    [Nochmals kaufen](https://www.amazon.de/gp/buyagain?ats=zzz&ref=ppx_yo2ov_dt_b_bia_item)
+
+        [Deinen Artikel anzeigen](https://www.amazon.de/your-orders/pop?ref=ppx_yo2ov_dt_b_pop&orderId=303-2309057-1730713&lineItemId=mlmomomqroluuoy&shipmentId=U1LvP303G&packageId=1&asin=3965841068)
+
+        [Schreib eine Produktrezension](https://www.amazon.de/review/review-your-purchases?asins=3965841068&channel=YAcc-wr&ref=ppx_yo2ov_dt_b_rev_prod)
+
+    Bestellung aufgegeben
+
+    29. Dezember 2024
+
+    Summe
+
+    14,99 €
+
+                                Bestellnr.
+                                D01-8753234-0482263
+
+    [Bestelldetails anzeigen](https://www.amazon.de/gp/css/order-details?orderID=D01-8753234-0482263&ref=ppx_yo2ov_dt_b_fed_digi_order_details_351)
+
+                        [Atomic Habits: The life-changing million-copy #1 bestseller (English Edition)](https://www.amazon.de/dp/B01N5AX61W?ref=ppx_yo2ov_dt_b_fed_digi_asin_title_351)
+
+    Kindle-Ausgabe
+
+                          James Clear
+
+                        Der R\xfcckgabezeitraum ist am 12. Januar 2025 geschlossen
+
+        [Meinen Artikel anzeigen](https://www.amazon.de/your-orders/pop?ref=ppx_yo2ov_dt_b_fed_digi_pop_351&lineItemId=43071015092851&orderId=D01-8753234-0482263)
+
+        [Inhalte und Ger\xe4te verwalten](https://www.amazon.de/hz/mycd/digital-console/contentlist/allcontent?ref=ppx_yo2ov_dt_b_fed_digi_manage_digital_content_351)
+"""
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -247,6 +378,76 @@ def test_b_deutsche_post():
     dp = next(i for i in _all_items(order) if i['asin'] == 'B00EJBP6A0')
     assert dp['price'] == '6,99'
     assert dp['seller'] == 'HeiTrade GmbH'
+
+
+def test_c_order_count():
+    assert len(parse_orders(FIXTURE_C)) == 4
+
+
+def test_c_headers():
+    """All four order headers parse correctly despite blank-line noise."""
+    orders = parse_orders(FIXTURE_C)
+    o = _order(orders, '303-8830223-7233913')
+    assert o['order_date']  == '2024-12-31'
+    assert o['order_total'] == '18,98'
+    assert o['type']        == 'physisch'
+
+    o = _order(orders, 'D01-4663869-6632613')
+    assert o['order_date']  == '2024-12-30'
+    assert o['order_total'] == '3,99'
+    assert o['type']        == 'digital'
+
+    o = _order(orders, '303-2309057-1730713')
+    assert o['order_date']  == '2024-12-29'
+    assert o['order_total'] == '36,27'
+    assert o['type']        == 'physisch'
+
+    o = _order(orders, 'D01-8753234-0482263')
+    assert o['order_date']  == '2024-12-29'
+    assert o['order_total'] == '14,99'
+    assert o['type']        == 'digital'
+
+
+def test_c_ugreen_hama_one_package():
+    """Two multi-line product names joined into one package (same shipmentId)."""
+    order = _order(parse_orders(FIXTURE_C), '303-8830223-7233913')
+    assert len(order['packages']) == 1
+    pkg = order['packages'][0]
+    assert pkg['shipment_id'] == 'UCrGQrbwG'
+    asins = {i['asin'] for i in pkg['line_items']}
+    assert asins == {'B0CD1BHXPZ', 'B08YS1ZZ99'}
+
+
+def test_c_bbc_player():
+    order = _order(parse_orders(FIXTURE_C), 'D01-4663869-6632613')
+    items = _all_items(order)
+    assert len(items) == 1
+    assert items[0]['asin'] == 'B07K2984VD'
+
+
+def test_c_three_separate_packages():
+    """Three items each with a distinct shipmentId → three packages."""
+    order = _order(parse_orders(FIXTURE_C), '303-2309057-1730713')
+    assert len(order['packages']) == 3
+    shipment_asins = {p['shipment_id']: p['line_items'][0]['asin']
+                      for p in order['packages']}
+    assert shipment_asins == {
+        'UJjm3z0dG': 'B0D2SVRC4W',
+        'UnQTTs04G': 'B074MDQWLR',
+        'U1LvP303G': '3965841068',
+    }
+
+
+def test_c_kindle_noise_not_items():
+    """Kindle-Ausgabe, author name, and Rückgabezeitraum must not become items."""
+    order = _order(parse_orders(FIXTURE_C), 'D01-8753234-0482263')
+    items = _all_items(order)
+    assert len(items) == 1
+    assert items[0]['asin'] == 'B01N5AX61W'
+    names = [i['name'] for i in items]
+    assert not any('Kindle' in n for n in names)
+    assert not any('James Clear' in n for n in names)
+    assert not any('Rückgabezeitraum' in n for n in names)
 
 
 def test_b_two_separate_packages():

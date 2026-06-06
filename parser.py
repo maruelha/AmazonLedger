@@ -17,6 +17,8 @@ NOISE_TEXTS = [
     'Meine Video-Bibliothek',
 ]
 
+_ORDER_NO_RE = re.compile(r'([A-Z0-9]{3}-\d{7}-\d{7})', re.IGNORECASE)
+
 
 def _clean(line):
     return re.sub(r'^\*\s*', '', line).strip()
@@ -39,6 +41,30 @@ def _is_noise(text):
 
 def _links(line):
     return re.findall(r'\[([^\]]*)\]\(([^)]+)\)', line)
+
+
+def _join_split_links(lines):
+    """
+    Merge lines that are continuation of a multi-line markdown link.
+    Amazon's HTML-to-markdown paste sometimes splits long product names
+    across lines.  A line that starts with '[' but has no '](' is the
+    beginning of such a split; merge subsequent lines until '](' appears.
+    """
+    out = []
+    buf = None
+    for line in lines:
+        if buf is not None:
+            buf = buf + ' ' + line
+            if '](' in buf:
+                out.append(buf)
+                buf = None
+        elif line.startswith('[') and '](' not in line:
+            buf = line
+        else:
+            out.append(line)
+    if buf is not None:
+        out.append(buf)
+    return out
 
 
 def _find_product(line_links):
@@ -112,32 +138,43 @@ def _parse_block(lines):
         'packages': [],
     }
 
-    if lines and lines[0].startswith('Abonnement abgerechnet am'):
+    # Work from non-blank lines so blank/whitespace-only noise between fields
+    # doesn't prevent finding values (real clipboard has many such lines).
+    content = [l for l in lines if l]
+
+    if content and content[0].startswith('Abonnement abgerechnet am'):
         order['type'] = 'digital'
 
-    expect_total = False
-    for i, line in enumerate(lines):
-        if i == 1:
-            d = _parse_date(line)
-            if d:
-                order['order_date'] = d
+    # Date: first content line after the boundary (skip any blanks)
+    if len(content) > 1:
+        d = _parse_date(content[1])
+        if d:
+            order['order_date'] = d
 
-        if line == 'Summe':
-            expect_total = True
-            continue
-
-        if expect_total:
-            m = re.match(r'^([\d,]+)\s*€', line)
+    # Total: content line immediately after 'Summe'
+    for i, line in enumerate(content):
+        if line == 'Summe' and i + 1 < len(content):
+            m = re.match(r'^([\d,]+)\s*€', content[i + 1])
             if m:
                 order['order_total'] = m.group(1)
-            expect_total = False
-            continue
+            break
 
-        m = re.match(r'Bestellnr\.\s+(\S+)', line)
-        if m:
-            order['order_no'] = m.group(1)
-            if order['order_no'].startswith('D0'):
+    # Order number: may be on the same line as 'Bestellnr.' (clean format)
+    # or on the next content line (real clipboard puts them on separate lines)
+    for i, line in enumerate(content):
+        if 'Bestellnr.' in line:
+            m = _ORDER_NO_RE.search(line)
+            if m:
+                order['order_no'] = m.group(1)
+            else:
+                for j in range(i + 1, min(i + 4, len(content))):
+                    m = _ORDER_NO_RE.search(content[j])
+                    if m:
+                        order['order_no'] = m.group(1)
+                        break
+            if order['order_no'] and order['order_no'].startswith('D0'):
                 order['type'] = 'digital'
+            break
 
     items = _parse_items(lines)
 
@@ -164,7 +201,7 @@ def _parse_block(lines):
 
 def parse_orders(text: str) -> list:
     """Parse one or more pasted Amazon order blocks and return a list of order dicts."""
-    lines = [_clean(l) for l in text.split('\n')]
+    lines = _join_split_links([_clean(l) for l in text.split('\n')])
 
     boundaries = [
         i for i, l in enumerate(lines)
