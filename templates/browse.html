@@ -63,12 +63,14 @@
     .badge { font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; }
     .badge-digital  { background: #cce5ff; color: #004085; }
     .badge-physisch { background: #d4edda; color: #155724; }
-    .invoice-input {
-      margin-left: auto; font-size: 0.82rem; padding: 3px 7px;
-      border: 1px solid #556; border-radius: 4px; background: rgba(255,255,255,0.12);
-      color: #fff; width: 180px;
+    input.invoice-pkg {
+      width: 160px; padding: 3px 6px; border: 1px solid #ccc;
+      border-radius: 4px; font-size: 0.82rem;
     }
-    .invoice-input::placeholder { color: rgba(255,255,255,0.5); }
+    input.invoice-item {
+      width: 120px; padding: 3px 6px; border: 1px solid #ccc;
+      border-radius: 4px; font-size: 0.82rem;
+    }
 
     /* Package */
     .package { border-top: 1px solid #f0f0f0; padding: 10px 14px; }
@@ -153,17 +155,12 @@
     </div>
 
     {% for order in orders %}
-    <input type="hidden" name="order_ids" value="{{ order.id }}">
     <div class="order-card">
       <div class="order-header">
         <strong>{{ order.order_no }}</strong>
         <span>{{ order.order_date }}</span>
         <span>{{ order.order_total }} €</span>
         <span class="badge badge-{{ order.type }}">{{ order.type }}</span>
-        <input class="invoice-input" type="text"
-               name="order_{{ order.id }}_invoice_name"
-               value="{{ order.invoice_name or '' }}"
-               placeholder="Rechnungsname …">
       </div>
 
       {% for pkg in order.packages %}
@@ -179,6 +176,13 @@
                    value="{{ pkg.shipment_amount or '' }}"
                    placeholder="0,00">
           </label>
+          <label>
+            Rechnung
+            <input type="text" class="invoice-pkg"
+                   name="package_{{ pkg.id }}_invoice_name"
+                   value="{{ pkg.invoice_name or '' }}"
+                   placeholder="Rechnungsname …">
+          </label>
         </div>
 
         <table>
@@ -191,6 +195,7 @@
               <th>Betrag (€)</th>
               <th title="Steuerrelevant">Steuer?</th>
               <th title="Steuer-Tag">Tag?</th>
+              <th title="Rechnung (Artikel-Override)">Rechnung</th>
             </tr>
           </thead>
           <tbody>
@@ -216,6 +221,12 @@
                 <input type="checkbox"
                        name="item_{{ item.id }}_tax_tag"
                        {% if item.tax_tag %}checked{% endif %}>
+              </td>
+              <td>
+                <input type="text" class="invoice-item"
+                       name="item_{{ item.id }}_invoice_name"
+                       value="{{ item.invoice_name or '' }}"
+                       placeholder="">
               </td>
             </tr>
             {% endfor %}

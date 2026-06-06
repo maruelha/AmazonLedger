@@ -351,6 +351,32 @@ def test_year_and_tax_filter_combined(tmp_db):
     assert len(get_filtered_orders(tmp_db, year='2023', tax_relevant_only=True)) == 0
 
 
+def test_export_invoice_fallback(tmp_db):
+    """invoice_name resolution: item overrides package; package is fallback; blank if neither."""
+    save_orders(tmp_db, parse_orders(FIXTURE_B), {}, {}, {})
+    tmp_db.execute("UPDATE items SET tax_relevant=1")
+
+    # B00EJBP6A0 is in shipment DKHqm9zdr — set only package invoice → fallback to package
+    tmp_db.execute("UPDATE packages SET invoice_name='SHIP-INV' WHERE shipment_id='DKHqm9zdr'")
+    # B00BYRMMCW is in shipment U1qYPH4xv — set both package and item invoice → item wins
+    tmp_db.execute("UPDATE packages SET invoice_name='PKG-INV' WHERE shipment_id='U1qYPH4xv'")
+    tmp_db.execute("UPDATE items SET invoice_name='ITEM-INV' WHERE asin='B00BYRMMCW'")
+    tmp_db.commit()
+
+    rows = get_export_rows(tmp_db)
+    by_asin = {r['asin']: r for r in rows}
+
+    assert by_asin['B00BYRMMCW']['invoice_name'] == 'ITEM-INV'   # item overrides package
+    assert by_asin['B00EJBP6A0']['invoice_name'] == 'SHIP-INV'  # package fallback
+
+    # Blank: clear both → invoice_name is None
+    tmp_db.execute("UPDATE packages SET invoice_name=NULL WHERE shipment_id='DKHqm9zdr'")
+    tmp_db.commit()
+    rows2 = get_export_rows(tmp_db)
+    by_asin2 = {r['asin']: r for r in rows2}
+    assert by_asin2['B00EJBP6A0']['invoice_name'] is None        # blank when neither set
+
+
 def test_csv_only_tax_relevant(tmp_db):
     save_orders(tmp_db, parse_orders(FIXTURE_B), {}, {}, {})
     tmp_db.execute("UPDATE items SET tax_relevant=1 WHERE asin='B00BYRMMCW'")

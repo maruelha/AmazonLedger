@@ -85,26 +85,26 @@ def get_filtered_orders(conn, year=None, tax_relevant_only=False):
     return result
 
 
-def save_edits(conn, form, item_ids, order_ids, pkg_ids):
+def save_edits(conn, form, item_ids, pkg_ids):
     for iid in item_ids:
         conn.execute(
-            'UPDATE items SET tax_relevant=?, tax_tag=?, item_amount=? WHERE id=?',
+            'UPDATE items SET tax_relevant=?, tax_tag=?, item_amount=?, invoice_name=? WHERE id=?',
             (
                 1 if f'item_{iid}_tax_relevant' in form else 0,
                 1 if f'item_{iid}_tax_tag' in form else 0,
                 _normalize(form.get(f'item_{iid}_item_amount', '')),
+                form.get(f'item_{iid}_invoice_name', '').strip() or None,
                 iid,
             )
         )
-    for oid in order_ids:
-        conn.execute(
-            'UPDATE orders SET invoice_name=? WHERE id=?',
-            (form.get(f'order_{oid}_invoice_name', '').strip() or None, oid)
-        )
     for pid in pkg_ids:
         conn.execute(
-            'UPDATE packages SET shipment_amount=? WHERE id=?',
-            (_normalize(form.get(f'package_{pid}_shipment_amount', '')), pid)
+            'UPDATE packages SET shipment_amount=?, invoice_name=? WHERE id=?',
+            (
+                _normalize(form.get(f'package_{pid}_shipment_amount', '')),
+                form.get(f'package_{pid}_invoice_name', '').strip() or None,
+                pid,
+            )
         )
     conn.commit()
 
@@ -122,7 +122,8 @@ def get_export_rows(conn, year=None):
             o.order_date, o.order_no, o.type, p.shipment_id,
             i.name   AS item_name, i.asin, i.qty, i.seller,
             i.item_amount, p.shipment_amount, i.tax_tag,
-            o.order_total, o.invoice_name
+            o.order_total,
+            COALESCE(i.invoice_name, p.invoice_name) AS invoice_name
         FROM items i
         JOIN packages p ON p.id = i.package_id
         JOIN orders  o ON o.id = i.order_id

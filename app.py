@@ -92,11 +92,10 @@ def browse():
 def browse_save():
     year    = request.form.get('year', '')
     tax_rel = request.form.get('tax_rel', '')
-    item_ids  = [int(x) for x in request.form.getlist('item_ids')]
-    order_ids = [int(x) for x in request.form.getlist('order_ids')]
-    pkg_ids   = [int(x) for x in request.form.getlist('pkg_ids')]
+    item_ids = [int(x) for x in request.form.getlist('item_ids')]
+    pkg_ids  = [int(x) for x in request.form.getlist('pkg_ids')]
     conn = get_connection(DB_PATH)
-    save_edits(conn, request.form, item_ids, order_ids, pkg_ids)
+    save_edits(conn, request.form, item_ids, pkg_ids)
     conn.close()
     parts = [p for p in [f'year={year}' if year else '',
                           f'tax_rel={tax_rel}' if tax_rel else ''] if p]
